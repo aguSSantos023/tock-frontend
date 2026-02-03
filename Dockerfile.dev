@@ -1,0 +1,16 @@
+FROM oven/bun:1
+
+WORKDIR /app
+
+RUN bun add -g @angular/cli
+
+COPY package.json bun.lockb* ./
+RUN bun install
+
+COPY . .
+
+EXPOSE 4200
+
+# Usamos --host 0.0.0.0 para que sea accesible desde fuera del contenedor
+# Usamos --poll para que detecte cambios de archivos en volúmenes de Docker
+CMD ["bun", "run", "ng", "serve", "--host", "0.0.0.0", "--poll", "2000"]
