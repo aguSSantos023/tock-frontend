@@ -23,4 +23,10 @@ export class SongManager {
 
     return await firstValueFrom(this.http.post(this.apiUrl, formData));
   }
+
+  getAudioBlob(songId: number) {
+    return this.http.get(`${this.apiUrl}/${songId}/audio`, {
+      responseType: 'blob', // Decirle que esperamos un archivo binario
+    });
+  }
 }

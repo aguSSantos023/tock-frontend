@@ -94,14 +94,62 @@
     } @else {
       @for (song of songManager.songs.value() ?? []; track song.id) {
         <div
-          class="bg-gray-900 border border-gray-800 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4 hover:border-gray-700 transition-colors shadow-lg"
+          (click)="togglePlay(song)"
+          class="border rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4 transition-all shadow-lg cursor-pointer group"
+          [class.bg-gray-800]="currentSong()?.id === song.id"
+          [class.border-indigo-500]="currentSong()?.id === song.id"
+          [class.bg-gray-900]="currentSong()?.id !== song.id"
+          [class.border-gray-800]="currentSong()?.id !== song.id"
+          [class.hover:border-gray-600]="currentSong()?.id !== song.id"
         >
-          <div class="h-12 w-12 bg-gray-800 rounded-full flex items-center justify-center shrink-0">
-            <span class="text-2xl">🎵</span>
+          <div
+            class="h-14 w-14 rounded-full flex items-center justify-center shrink-0 transition-colors"
+            [class.bg-indigo-600]="currentSong()?.id === song.id"
+            [class.text-white]="currentSong()?.id === song.id"
+            [class.bg-gray-800]="currentSong()?.id !== song.id"
+            [class.group-hover:bg-gray-700]="currentSong()?.id !== song.id"
+          >
+            @if (currentSong()?.id === song.id && isPlaying()) {
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+                class="w-8 h-8"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15.75 5.25v13.5m-7.5-13.5v13.5"
+                />
+              </svg>
+            } @else {
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+                class="w-8 h-8 ml-1"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"
+                />
+              </svg>
+            }
           </div>
 
           <div class="flex-1 text-center sm:text-left min-w-0">
-            <h3 class="text-white font-semibold truncate">{{ song.title }}</h3>
+            <h3
+              class="font-bold text-lg truncate transition-colors"
+              [class.text-indigo-400]="currentSong()?.id === song.id"
+              [class.text-white]="currentSong()?.id !== song.id"
+            >
+              {{ song.title }}
+            </h3>
             <div class="text-xs text-gray-500 flex gap-3 justify-center sm:justify-start mt-1">
               <span>{{ song.created_at | date: 'mediumDate' }}</span>
               <span>•</span>
@@ -109,13 +157,14 @@
             </div>
           </div>
 
-          <div class="w-full sm:w-auto">
-            <audio
-              controls
-              class="w-full h-8 rounded-lg"
-              [src]="backendUrl + song.audio_url"
-            ></audio>
-          </div>
+          @if (currentSong()?.id === song.id && isPlaying()) {
+            <div class="flex gap-1 items-end h-6 mr-4">
+              <div class="w-1 bg-indigo-500 animate-bounce h-3"></div>
+              <div class="w-1 bg-indigo-500 animate-[bounce_1.2s_infinite] h-5"></div>
+              <div class="w-1 bg-indigo-500 animate-[bounce_0.8s_infinite] h-4"></div>
+              <div class="w-1 bg-indigo-500 animate-[bounce_1.1s_infinite] h-2"></div>
+            </div>
+          }
         </div>
       }
     }
