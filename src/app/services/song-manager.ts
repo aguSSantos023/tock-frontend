@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, resource } from '@angular/core';
 import { environment } from '../../environments/environment.development';
-import { firstValueFrom, Observable } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { Song } from '../models/song.model';
 
 @Injectable({
@@ -22,6 +22,11 @@ export class SongManager {
     formData.append('file', file);
 
     return await firstValueFrom(this.http.post(this.apiUrl, formData));
+  }
+
+  async delete(songId: number) {
+    await firstValueFrom(this.http.delete(`${this.apiUrl}/${songId}`));
+    this.songs.reload();
   }
 
   getAudioBlob(songId: number) {
