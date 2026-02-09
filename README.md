@@ -1,59 +1,58 @@
 # TockFrontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.5.
+> **⚠️ IMPORTANT:** Este repositorio es parte de una aplicación full-stack. Para ejecutar el proyecto completo (Frontend + Backend + Base de Datos) utilizando Docker, consulta la documentación del
+> **[Repositorio del Backend de Tock](https://github.com/aguSSantos023/tock-backend)**.
 
-## Development server
+Este proyecto fue generado usando [Angular CLI](https://github.com/angular/angular-cli) versión 21.0.5.
 
-To start a local development server, run:
+## Configuración
+
+- **Desarrollo**: Ajustes en `src/environments/environment.ts` (Por defecto, apunta a `http://localhost:3000/api`).
+
+## Servidor de Desarrollo Local
+
+Para iniciar un servidor de desarrollo local, ejecuta:
 
 ```bash
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Una vez que el servidor esté en ejecución, abre tu navegador y navega a `http://localhost:4200/`. La aplicación se recargará automáticamente cada vez que modifiques cualquier archivo fuente.
 
-## Code scaffolding
+## Esqueleto de Código
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Angular CLI incluye herramientas poderosas de esqueleto de código. Para generar un nuevo componente, ejecuta:
 
 ```bash
-ng generate component component-name
+ng generate component nombre-del-componente
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Para una lista completa de esquemas disponibles (como componentes, directivas o tuberías), ejecuta:
 
 ```bash
 ng generate --help
 ```
 
-## Building
+## Compilación
 
-To build the project run:
+Para compilar el proyecto, ejecuta:
 
 ```bash
 ng build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Esto compilará tu proyecto y almacenará los artefactos de construcción en el directorio `dist/`. Por defecto, la compilación para producción optimiza tu aplicación para el rendimiento y velocidad.
 
-## Running unit tests
+## Ejecución de Pruebas Unitarias
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+Para ejecutar pruebas unitarias con el test runner Vitest, utiliza el siguiente comando:
 
 ```bash
 ng test
 ```
 
-## Running end-to-end tests
+## Recursos Adicionales
 
-For end-to-end (e2e) testing, run:
+Para obtener más información sobre el uso del Angular CLI, incluyendo referencias detalladas de comandos, consulta la página de [Angular CLI Overview and Command Reference](https://angular.io/cli).
 
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+---
