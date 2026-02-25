@@ -4,7 +4,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { environment } from '../../environments/environment';
 import { tap } from 'rxjs/operators';
 import { AuthResponse, LoginRequest, RegisterRequest } from '../models/auth.model';
-import { AuthStatus } from '../interface/authStatus.interface';
+import { AuthStatus } from '../interface/auth-status.type';
 
 @Injectable({
   providedIn: 'root',
