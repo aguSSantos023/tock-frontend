@@ -33,7 +33,7 @@ export class RegisterPage {
 
     this.authService.register({ email, password }).subscribe({
       next: () => {
-        this.router.navigate(['/songs']);
+        this.router.navigate(['/auth/verify-email']);
       },
       error: (err) => {
         console.error(err);

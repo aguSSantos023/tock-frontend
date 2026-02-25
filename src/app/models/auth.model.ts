@@ -14,6 +14,7 @@ export interface RegisterRequest {
 export interface AuthResponse {
   token?: string;
   message: string;
+  isVerified: boolean;
   user?: {
     id: number;
     email: string;

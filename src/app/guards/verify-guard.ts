@@ -4,16 +4,16 @@ import { AuthUser } from '../services/auth-user';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { filter, map, take } from 'rxjs';
 
-export const authGuard: CanActivateFn = () => {
-  const authUserService = inject(AuthUser);
+export const verifyGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthUser);
   const router = inject(Router);
 
-  return toObservable(authUserService.status).pipe(
-    filter((status) => status !== 'checking'), // Espera a que la API responda
+  return toObservable(authService.status).pipe(
+    filter((status) => status !== 'checking'),
     take(1),
     map((status) => {
-      if (status === 'authenticated') return true;
-      if (status === 'unverified') return router.parseUrl('/auth/verify-email');
+      if (status === 'unverified') return true;
+      if (status === 'authenticated') return router.parseUrl('/songs');
       return router.parseUrl('/auth/login');
     }),
   );
