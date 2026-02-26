@@ -67,6 +67,12 @@ export class VerifyPage {
 
   onInput(event: any, index: number) {
     const val = event.target.value;
+
+    // auto-submit
+    if (this.isCodeComplete() && !this.isSubmitting()) {
+      this.onVerify();
+    }
+
     //Cambia al siguiente input al rellenarlo
     if (val && index < 3) {
       this.otpInputs()[index + 1].nativeElement.focus();
