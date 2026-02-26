@@ -14,6 +14,7 @@ export const authGuard: CanActivateFn = () => {
     map((status) => {
       if (status === 'authenticated') return true;
       if (status === 'unverified') return router.parseUrl('/auth/verify-email');
+      authUserService.logout();
       return router.parseUrl('/auth/login');
     }),
   );

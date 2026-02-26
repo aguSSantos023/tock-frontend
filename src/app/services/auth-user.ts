@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 import { tap } from 'rxjs/operators';
 import { AuthResponse, LoginRequest, RegisterRequest } from '../models/auth.model';
 import { AuthStatus } from '../interface/auth-status.type';
+import { OtpResponse } from '../interface/otp-response.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -46,6 +47,18 @@ export class AuthUser {
         }
       }),
     );
+  }
+
+  verifyEmail(code: string) {
+    return this.http.post<OtpResponse>(`${this.apiUrl}/verify-otp`, { otpCode: code }).pipe(
+      tap(() => {
+        this.#status.set('authenticated');
+      }),
+    );
+  }
+
+  resendCode() {
+    return this.http.post<OtpResponse>(`${this.apiUrl}/resend-otp`, {});
   }
 
   checkAuthStatus(): void {
