@@ -81,6 +81,7 @@ export class AuthUser {
 
   logout() {
     this.cookieService.delete('token', '/');
+    this.#status.set('unauthenticated');
   }
 
   getToken() {
