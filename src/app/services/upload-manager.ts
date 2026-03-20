@@ -17,6 +17,8 @@ import {
   timer,
 } from 'rxjs';
 
+const worker = new Worker(new URL('../workers/audio-converter.worker.ts', import.meta.url));
+
 @Injectable({
   providedIn: 'root',
 })
@@ -51,7 +53,7 @@ export class UploadManager {
     const newTasks: UploadTask[] = newFiles.map((file) => ({
       id: crypto.randomUUID(),
       file,
-      title: file.name.replace(/\.[^/.]+%/, ''),
+      title: file.name.replace(/\.[^/.]+$/, ''),
       status: 'pending',
       progress: 0,
     }));
@@ -97,10 +99,26 @@ export class UploadManager {
 
   private executeFlow(task: UploadTask) {
     return of(task).pipe(
-      // Fase de Transcodificación, próximo paso: Web Worker
-      tap(() => this.updateTaskStatus(task.id, 'uploading', 0)),
+      // Fase de Transcodificación
+      tap(() => this.updateTaskStatus(task.id, 'converting', 0)),
+      concatMap(() =>
+        from(this.convertToOpus(task)).pipe(
+          tap((opusBlob) => {
+            // Guardamos el resultado en la tarea para que uploadToServer lo use
+            this.queue.update((tasks) =>
+              tasks.map((t) => (t.id === task.id ? { ...t, finalBlob: opusBlob } : t)),
+            );
+          }),
+          // Si la conversión falla, informamos y saltamos a la siguiente
+          catchError((err) => {
+            this.updateTaskStatus(task.id, 'error', 0);
+            throw err;
+          }),
+        ),
+      ),
 
       // Subida al servidor
+      tap(() => this.updateTaskStatus(task.id, 'uploading', 0)),
       concatMap(() => this.uploadToServer(task)),
 
       // Delay aleatorio 1-3s proteccion servidor
@@ -150,6 +168,31 @@ export class UploadManager {
           if (isDone) this.updateTaskStatus(task.id, 'success', 100);
         }),
       );
+  }
+
+  private convertToOpus(task: UploadTask): Promise<Blob> {
+    console.log(`[Manager] Enviando a transcodificar: ${task.title}`);
+    return new Promise((resolve, reject) => {
+      // Creamos un controlador de respuesta único para esta tarea
+      const onMessage = (event: MessageEvent) => {
+        if (event.data.id === task.id) {
+          worker.removeEventListener('message', onMessage);
+
+          if (event.data.success) {
+            console.log(`[Manager] ✅ Conversión exitosa: ${task.title}`, event.data.blob);
+            resolve(event.data.blob);
+          } else {
+            console.error(`[Manager] ❌ Error en worker:`, event.data.error);
+            reject(new Error(event.data.error));
+          }
+        }
+      };
+
+      worker.addEventListener('message', onMessage);
+
+      // Enviamos el archivo original al worker
+      worker.postMessage({ file: task.file, id: task.id });
+    });
   }
 
   // Helpers de Estado
