@@ -68,8 +68,6 @@
                       <span class="text-green-500">✅</span>
                     } @else if (task.status === 'error') {
                       <span class="text-red-500">❌</span>
-                    } @else if (task.status === 'converting') {
-                      <span class="animate-spin text-blue-400 text-xs">⚙️</span>
                     } @else if (task.status === 'uploading') {
                       <span class="animate-bounce text-yellow-400 text-xs">⬆️</span>
                     } @else {
@@ -95,7 +93,6 @@
                   <div
                     class="h-full transition-all duration-500 ease-out"
                     [style.width.%]="task.progress"
-                    [class.bg-blue-500]="task.status === 'converting'"
                     [class.bg-yellow-500]="task.status === 'uploading'"
                     [class.bg-green-500]="task.status === 'success'"
                     [class.bg-red-500]="task.status === 'error'"

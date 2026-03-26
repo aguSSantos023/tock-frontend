@@ -79,27 +79,6 @@ export class SongsPage implements OnInit, AfterViewInit {
     });
   }
 
-  async onSubmit() {
-    if (this.uploadForm.invalid) return;
-
-    this.isUploading.set(true);
-    const { fileSource, title } = this.uploadForm.value;
-
-    try {
-      if (fileSource && title) {
-        await this.songManager.upload(fileSource, title);
-
-        this.toggleForm(); // Cierra el formulario
-        this.songManager.refresh();
-      }
-    } catch (error) {
-      console.error(error);
-      this.errorMessage.set('Error al subir la canción.');
-    } finally {
-      this.isUploading.set(false);
-    }
-  }
-
   ngAfterViewInit() {
     this.observer = new IntersectionObserver(
       (entries) => {
