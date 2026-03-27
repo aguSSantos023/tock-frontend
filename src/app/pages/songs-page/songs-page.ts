@@ -2,15 +2,16 @@ import { AfterViewInit, Component, inject, OnInit, signal } from '@angular/core'
 import { SongManager } from '../../services/song-manager';
 import { environment } from '../../../environments/environment.development';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Song } from '../../interface/song.interface';
-import { DurationPipe } from '../../pipes/duration-pipe';
-import { FilesizePipe } from '../../pipes/filesize-pipe';
+import { Song } from '../../shared/interface/song.interface';
+import { DurationPipe } from '../../shared/pipes/duration-pipe';
+import { FilesizePipe } from '../../shared/pipes/filesize-pipe';
 import { PlaybackManager } from '../../services/playback-manager';
 import { UploadManager } from '../../services/upload-manager';
+import { EditableTitle } from '../../shared/directives/editable-title';
 
 @Component({
   selector: 'app-songs-page',
-  imports: [ReactiveFormsModule, DurationPipe, FilesizePipe],
+  imports: [ReactiveFormsModule, DurationPipe, FilesizePipe, EditableTitle],
   templateUrl: './songs-page.html',
   styleUrl: './songs-page.css',
 })

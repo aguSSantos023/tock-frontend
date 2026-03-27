@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpEventType } from '@angular/common/ht
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { SongManager } from './song-manager';
 import { environment } from '../../environments/environment';
-import { UploadStatus, UploadTask } from '../interface/upload.interface';
+import { UploadStatus, UploadTask } from '../shared/interface/upload.interface';
 import { catchError, concatMap, EMPTY, filter, of, Subject, takeUntil, tap, timer } from 'rxjs';
 import { PlaybackManager } from './playback-manager';
 
@@ -46,6 +46,15 @@ export class UploadManager {
     }));
 
     this.queue.update((prev) => [...prev, ...newTasks]);
+  }
+
+  /**
+   * Actualizar título de la canción
+   */
+  updateTaskTitle(id: string, newTitle: string) {
+    this.queue.update((tasks) =>
+      tasks.map((task) => (task.id === id ? { ...task, title: newTitle } : task)),
+    );
   }
 
   /**

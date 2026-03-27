@@ -17,13 +17,37 @@
         <div
           class="absolute right-0 top-14 w-112.5 bg-slate-900 border border-slate-700 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col max-h-[80vh] overflow-hidden z-30"
         >
-          <div
-            class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50"
+          <header
+            class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/80 backdrop-blur-md"
           >
-            <h3 class="text-white font-bold flex items-center gap-2">
-              <span class="text-indigo-500">⚡</span> Estación de Transcodificación
-            </h3>
-          </div>
+            <div class="flex flex-col">
+              <h3 class="text-white font-bold flex items-center gap-2">
+                <span class="text-indigo-400 text-lg">🚀</span>
+                Estación de Subida
+              </h3>
+              <span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+                Gestión de cola de archivos
+              </span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <div
+                class="flex items-center bg-slate-800/50 border border-slate-700 px-2.5 py-1 rounded-full"
+              >
+                <span class="text-[11px] font-medium text-slate-400 mr-1.5">CUPO</span>
+                <span
+                  class="text-xs font-bold"
+                  [class.text-green-400]="uploadManager.totalFiles() < 40"
+                  [class.text-yellow-500]="
+                    uploadManager.totalFiles() >= 40 && uploadManager.totalFiles() < 50
+                  "
+                  [class.text-red-500]="uploadManager.totalFiles() >= 50"
+                >
+                  {{ uploadManager.totalFiles() }} / 50
+                </span>
+              </div>
+            </div>
+          </header>
 
           <div
             (click)="fileInput.click()"
@@ -62,8 +86,8 @@
               <div
                 class="bg-slate-800/40 border border-slate-700/50 rounded-lg p-3 flex flex-col gap-2 group/item"
               >
-                <div class="flex justify-between items-center">
-                  <div class="flex items-center gap-3 overflow-hidden">
+                <div class="flex justify-between items-center w-full gap-4">
+                  <div class="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
                     @if (task.status === 'success') {
                       <span class="text-green-500">✅</span>
                     } @else if (task.status === 'error') {
@@ -74,7 +98,12 @@
                       <span class="text-slate-500 text-xs">⏳</span>
                     }
 
-                    <span class="text-sm text-slate-200 truncate font-medium pr-1">
+                    <span
+                      class="text-sm text-slate-200 truncate font-medium pr-1 block w-full cursor-pointer"
+                      appEditableTitle
+                      [editableEnabled]="!uploadManager.isProcessing() && task.status === 'pending'"
+                      (titleChanged)="uploadManager.updateTaskTitle(task.id, $event)"
+                    >
                       {{ task.title }}
                     </span>
                   </div>
@@ -82,9 +111,19 @@
                   @if (!uploadManager.isProcessing() && task.status === 'pending') {
                     <button
                       (click)="uploadManager.removeFromQueue(task.id)"
-                      class="opacity-0 group-hover/item:opacity-100 text-slate-500 hover:text-red-400 transition-all text-xs cursor-pointer"
+                      class="opacity-0 group-hover/item:opacity-100 text-slate-500 hover:text-red-400 transition-all text-xs cursor-pointer shrink-0"
                     >
-                      Quitar
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          fill="currentColor"
+                          d="m9.4 16.5l2.6-2.6l2.6 2.6l1.4-1.4l-2.6-2.6L16 9.9l-1.4-1.4l-2.6 2.6l-2.6-2.6L8 9.9l2.6 2.6L8 15.1zM7 21q-.825 0-1.412-.587T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413T17 21z"
+                        />
+                      </svg>
                     </button>
                   }
                 </div>
@@ -154,7 +193,7 @@
     </div>
   }
 
-  <main class="relative max-w-4xl mx-auto space-y-4 pb-10">
+  <main class="relative max-w-4xl mx-auto space-y-4 pb-24">
     @if (!songManager.loading() && songManager.songs().length === 0) {
       <div class="text-center py-20 bg-gray-900 rounded-xl border border-gray-800">
         <p class="text-gray-400 text-lg">No tienes canciones subidas aún.</p>
