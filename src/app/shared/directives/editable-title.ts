@@ -28,7 +28,7 @@ export class EditableTitle {
   onMouseEnter() {
     if (!this.editableEnabled() || this.isEditing) return;
 
-    this.renderer.addClass(this.el.nativeElement, 'cursor-text');
+    if (this.editableEnabled()) this.renderer.addClass(this.el.nativeElement, 'cursor-pointer');
     this.renderer.addClass(this.el.nativeElement, 'border-b');
     this.renderer.addClass(this.el.nativeElement, 'border-dashed');
     this.renderer.addClass(this.el.nativeElement, 'border-slate-400');
@@ -39,7 +39,7 @@ export class EditableTitle {
   onMouseLeave() {
     if (this.isEditing) return;
 
-    this.renderer.removeClass(this.el.nativeElement, 'cursor-text');
+    this.renderer.removeClass(this.el.nativeElement, 'cursor-pointer');
     this.renderer.removeClass(this.el.nativeElement, 'border-b');
     this.renderer.removeClass(this.el.nativeElement, 'border-dashed');
     this.renderer.removeClass(this.el.nativeElement, 'border-slate-400');

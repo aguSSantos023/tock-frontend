@@ -28,6 +28,10 @@ export class UploadManager {
   pendingCount = computed(() => this.queue().filter((t) => t.status === 'pending').length);
 
   hasCompleted = computed(() => this.successCount() > 0);
+  isQueueFull = computed(() => this.queue().length >= this.MAX_BATCH_SIZE);
+  isFinished = computed(
+    () => this.queue().length > 0 && this.pendingCount() === 0 && !this.isProcessing(),
+  );
 
   isStartUpload = signal<boolean>(false);
 
@@ -87,6 +91,8 @@ export class UploadManager {
     // Si no hay más tareas pendientes
     if (!nextTask) {
       this.isProcessing.set(false);
+
+      this.isStartUpload.set(false);
       if (this.playbackManager.isPlaying()) return;
 
       this.songManager.refresh(); // Refresca la lista
@@ -186,9 +192,6 @@ export class UploadManager {
     if (!this.isProcessing()) return;
 
     this.isProcessing.set(false);
-
-    // Opcional: Avisar al SongManager que refresque lo que ya haya subido hasta ahora
-    this.songManager.refresh();
   }
 
   /**

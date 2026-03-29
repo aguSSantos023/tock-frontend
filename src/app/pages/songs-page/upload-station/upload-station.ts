@@ -14,7 +14,7 @@ export class UploadStation {
   isDragging = signal(false);
 
   handleFiles(files: FileList | null | undefined) {
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0 || this.uploadManager.isQueueFull()) return;
 
     const mp3Files = Array.from(files).filter(
       (file) => file.type === 'audio/mpeg' || file.name.toLowerCase().endsWith('.mp3'),
