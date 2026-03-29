@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { UploadManager } from '../../../services/upload-manager';
 import { EditableTitle } from '../../../shared/directives/editable-title';
 

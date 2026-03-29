@@ -23,6 +23,8 @@ export class UploadManager {
   totalFiles = computed(() => this.queue().length);
   completedCount = computed(() => this.queue().filter((task) => task.status === 'success').length);
 
+  isStartUpload = signal<boolean>(false);
+
   private stopSignal$ = new Subject<void>();
 
   /**
@@ -63,6 +65,7 @@ export class UploadManager {
   startUploads() {
     if (this.isProcessing()) return;
     this.isProcessing.set(true);
+    this.isStartUpload.set(true);
     this.processNextTask();
   }
 
@@ -70,6 +73,8 @@ export class UploadManager {
    * Busca la siguiente tarea pendiente de forma dinámica
    */
   private processNextTask() {
+    if (!this.isProcessing()) return;
+
     // Buscamos la PRIMERA tarea que esté 'pending'
     const nextTask = this.queue().find((t) => t.status === 'pending');
 
@@ -171,6 +176,15 @@ export class UploadManager {
     this.queue.update((tasks) => tasks.map((t) => (t.id === id ? { ...t, error: msg } : t)));
   }
 
+  stopUploads() {
+    if (!this.isProcessing()) return;
+
+    this.isProcessing.set(false);
+
+    // Opcional: Avisar al SongManager que refresque lo que ya haya subido hasta ahora
+    this.songManager.refresh();
+  }
+
   /**
    * Lógica de refresco inteligente
    */
@@ -197,5 +211,6 @@ export class UploadManager {
   clearQueue() {
     if (this.isProcessing()) return;
     this.queue.set([]);
+    this.isStartUpload.set(false);
   }
 }
