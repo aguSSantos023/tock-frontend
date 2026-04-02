@@ -23,6 +23,26 @@ export class AuthUser {
 
   public userEmail = computed(() => this.#userData()?.email || null);
 
+  public storagePercent = computed(() => {
+    const data = this.userData();
+    if (!data) return 0;
+
+    const used = Number(data.storage_used);
+    const limit = Number(data.storage_limit);
+
+    if (limit === 0) return 0;
+
+    const percent = (used / limit) * 100;
+    return Math.min(percent, 100);
+  });
+
+  public storageStatusColor = computed(() => {
+    const percent = this.storagePercent();
+    if (percent >= 90) return '#ef4444'; // Rojo fuerte (text-red-500)
+    if (percent >= 70) return '#f97316'; // Naranja (text-orange-500)
+    return '#6366f1'; // Indigo (text-indigo-500)
+  });
+
   constructor() {
     this.checkAuthStatus();
   }

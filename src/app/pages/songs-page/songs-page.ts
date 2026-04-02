@@ -11,16 +11,17 @@ import {
 import { SongManager } from '../../services/song-manager';
 import { Song } from '../../shared/interface/song.interface';
 import { DurationPipe } from '../../shared/pipes/duration-pipe';
-import { FilesizePipe } from '../../shared/pipes/filesize-pipe';
 import { PlaybackManager } from '../../services/playback-manager';
 import { UploadManager } from '../../services/upload-manager';
 import { UploadStation } from './upload-station/upload-station';
 import { AuthUser } from '../../services/auth-user';
 import { UsernamePipe } from '../../shared/pipes/username-pipe';
+import { DecimalPipe } from '@angular/common';
+import { DataSizePipe } from '../../shared/pipes/datasize-pipe';
 
 @Component({
   selector: 'app-songs-page',
-  imports: [DurationPipe, FilesizePipe, UploadStation, UsernamePipe],
+  imports: [DurationPipe, DecimalPipe, DataSizePipe, UploadStation, UsernamePipe],
   templateUrl: './songs-page.html',
   styleUrl: './songs-page.css',
 })
