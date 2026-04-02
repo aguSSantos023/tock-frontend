@@ -2,6 +2,8 @@ import { inject, Injectable, signal } from '@angular/core';
 import { SongManager } from './song-manager';
 import { Song } from '../shared/interface/song.interface';
 
+const VOLUME_KEY = 'tock_player_volume';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -14,16 +16,51 @@ export class PlaybackManager {
   isPlaying = signal<boolean>(false);
   currentTime = signal<number>(0);
   duration = signal<number>(0);
-  volume = signal<number>(0.5);
+  volume = signal<number>(this.getStoredVolume());
 
   constructor() {
+    this.audio.volume = this.volume();
+
     this.setupAudioListeners();
   }
 
   private setupAudioListeners() {
     this.audio.ontimeupdate = () => this.currentTime.set(this.audio.currentTime);
-    this.audio.onloadedmetadata = () => this.duration.set(this.audio.duration);
+    this.audio.onloadedmetadata = () => {
+      this.duration.set(this.audio.duration);
+      this.updateMediaSession(); // Actualizar metadatos
+    };
     this.audio.onended = () => this.next();
+
+    // Escuchar cambios del elemento audio
+    this.audio.onplay = () => {
+      this.isPlaying.set(true);
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+    };
+    this.audio.onpause = () => {
+      this.isPlaying.set(false);
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+    };
+  }
+
+  private updateMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+
+    const song = this.currentSong();
+    if (!song) return;
+
+    // Mostrar info en el SO
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: song.title,
+      artist: song.artist || 'Artista desconocido',
+      album: 'Tock Music',
+    });
+
+    // Mapear botones
+    navigator.mediaSession.setActionHandler('play', () => this.togglePlay());
+    navigator.mediaSession.setActionHandler('pause', () => this.togglePlay());
+    navigator.mediaSession.setActionHandler('previoustrack', () => this.previous());
+    navigator.mediaSession.setActionHandler('nexttrack', () => this.next());
   }
 
   async playSong(song: Song) {
@@ -86,11 +123,26 @@ export class PlaybackManager {
   }
 
   updateVolume(value: number) {
-    this.audio.volume = value;
-    this.volume.set(value);
+    const safeVolume = Math.max(0, Math.min(1, value));
+
+    this.audio.volume = safeVolume;
+    this.volume.set(safeVolume);
+
+    localStorage.setItem(VOLUME_KEY, safeVolume.toString());
+  }
+
+  setMute(mute: boolean) {
+    this.audio.muted = mute;
   }
 
   seek(time: number) {
     this.audio.currentTime = time;
+
+    this.currentTime.set(time);
+  }
+
+  private getStoredVolume(): number {
+    const saved = localStorage.getItem(VOLUME_KEY);
+    return saved ? parseFloat(saved) : 0.5;
   }
 }
