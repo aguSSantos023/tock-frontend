@@ -16,3 +16,10 @@ export interface UploadStats {
   failed: number;
   isPaused: boolean;
 }
+
+export interface UploadResponse {
+  song: any;
+  storage: {
+    used: string;
+  };
+}

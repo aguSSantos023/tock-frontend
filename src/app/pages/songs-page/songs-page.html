@@ -14,7 +14,7 @@
           {{ showUploadStation() ? 'Cerrar' : '+ Subir Canción' }}
         </button>
         @if (showUploadStation()) {
-          <app-upload-station />
+          <app-upload-station (onClose)="showUploadStation.set(false)" />
         }
       </div>
 
