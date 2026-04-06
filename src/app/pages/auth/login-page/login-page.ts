@@ -35,7 +35,7 @@ export class LoginPage {
       await this.authUser.login({ email, password });
       console.log('iniciado');
 
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(['/songs']);
     } catch (err: any) {
       // 'error' es el string que devolvió parseError
       this.errorMessage.set('Usuario o contraseña incorrectos.');

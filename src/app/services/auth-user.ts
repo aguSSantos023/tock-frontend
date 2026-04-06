@@ -14,6 +14,7 @@ import { AuthStatus } from '../shared/interface/auth-status.type';
 import { firstValueFrom, of } from 'rxjs';
 import { UserData } from '../shared/interface/user.interface';
 import { PlaybackManager } from './playback-manager';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
@@ -21,6 +22,7 @@ import { PlaybackManager } from './playback-manager';
 export class AuthUser {
   private http = inject(HttpClient);
   private injector = inject(Injector);
+  private router = inject(Router);
 
   private apiUrl = `${environment.apiUrl}/auth`;
 
@@ -167,11 +169,13 @@ export class AuthUser {
 
   // --- MÉTODOS PRIVADOS DE APOYO ---
 
-  private clearAuthData(onReload: boolean = true) {
+  private clearAuthData(shouldNavigate: boolean = true) {
     this.#status.set('unauthenticated');
     this.#userData.set(null);
 
-    if (onReload) window.location.reload();
+    if (shouldNavigate) {
+      this.router.navigate(['/auth/login']);
+    }
   }
 
   private parseError(err: any): string {
