@@ -133,6 +133,11 @@ export class PlaybackManager {
 
   eject() {
     this.audio.pause();
+
+    if (this.audio.src && this.audio.src.startsWith('blob:')) {
+      URL.revokeObjectURL(this.audio.src);
+    }
+
     this.audio.src = '';
     this.audio.load();
 
