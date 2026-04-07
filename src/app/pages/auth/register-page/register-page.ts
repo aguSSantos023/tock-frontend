@@ -62,7 +62,9 @@ export class RegisterPage {
 
       this.router.navigate(['/auth/verify-email']);
     } catch (err: any) {
-      this.errorMessage.set('Error al registrar cuenta.');
+      const msg = err || 'Error al registrar cuenta.';
+
+      this.errorMessage.set(msg);
       this.isSubmitting.set(false);
     }
   }
