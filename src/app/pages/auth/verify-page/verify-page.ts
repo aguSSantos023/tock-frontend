@@ -22,15 +22,21 @@ export class VerifyPage {
   }
 
   async onVerify() {
+    if (!this.isCodeComplete() || this.isSubmitting()) return;
+
     this.isSubmitting.set(true);
     this.errorMessage.set('');
 
     try {
       await this.authUser.verifyEmail(this.getCurrentCode());
-
       this.router.navigate(['/songs']);
     } catch (err: any) {
-      this.errorMessage.set(err.error.message || 'Código inválido');
+      const msg = err || 'Código inválido o error de red';
+      this.errorMessage.set(msg);
+
+      this.otpInputs().forEach((input) => (input.nativeElement.value = ''));
+      this.otpInputs()[0].nativeElement.focus();
+
       this.isSubmitting.set(false);
     }
   }
@@ -68,21 +74,22 @@ export class VerifyPage {
   onInput(event: any, index: number) {
     const val = event.target.value;
 
-    // auto-submit
-    if (this.isCodeComplete() && !this.isSubmitting()) {
-      this.onVerify();
-    }
-
-    //Cambia al siguiente input al rellenarlo
+    // Mover el foco al siguiente input
     if (val && index < 3) {
       this.otpInputs()[index + 1].nativeElement.focus();
     }
+
+    // Auto-submit
+    if (this.isCodeComplete() && !this.isSubmitting()) {
+      this.onVerify();
+    }
   }
 
-  onBackspace(index: number) {
-    if (index > 0) {
-      //el setTimeout permite que primero se elimine y despues se retroceda de input
-      setTimeout(() => this.otpInputs()[index - 1].nativeElement.focus(), 0);
+  onBackspace(event: KeyboardEvent, index: number) {
+    const input = event.target as HTMLInputElement;
+
+    if (event.key === 'Backspace' && !input.value && index > 0) {
+      this.otpInputs()[index - 1].nativeElement.focus();
     }
   }
 
@@ -105,7 +112,7 @@ export class VerifyPage {
 
   private getCurrentCode(): string {
     return this.otpInputs()
-      .map((input) => input.nativeElement.value)
+      .map((input) => input.nativeElement.value.toUpperCase())
       .join('');
   }
 }
