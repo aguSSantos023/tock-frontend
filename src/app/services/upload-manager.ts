@@ -2,9 +2,10 @@ import { HttpClient, HttpErrorResponse, HttpEventType } from '@angular/common/ht
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { SongManager } from './song-manager';
 import { environment } from '../../environments/environment';
-import { UploadStatus, UploadTask } from '../shared/interface/upload.interface';
+import { UploadResponse, UploadStatus, UploadTask } from '../shared/interface/upload.interface';
 import { catchError, concatMap, EMPTY, filter, of, Subject, takeUntil, tap, timer } from 'rxjs';
 import { PlaybackManager } from './playback-manager';
+import { AuthUser } from './auth-user';
 
 @Injectable({
   providedIn: 'root',
@@ -13,6 +14,7 @@ export class UploadManager {
   private http = inject(HttpClient);
   private songManager = inject(SongManager);
   private playbackManager = inject(PlaybackManager);
+  private authUser = inject(AuthUser);
 
   private apiUrl = `${environment.apiUrl}/songs`;
   private readonly MAX_BATCH_SIZE = 50;
@@ -31,7 +33,11 @@ export class UploadManager {
   hasCompleted = computed(() => this.successCount() > 0);
   isQueueFull = computed(() => this.queue().length >= this.MAX_BATCH_SIZE);
   isFinished = computed(
-    () => this.queue().length > 0 && this.pendingCount() === 0 && !this.isProcessing(),
+    () =>
+      this.queue().length > 0 &&
+      this.pendingCount() === 0 &&
+      !this.isProcessing() &&
+      !this.queue().some((t) => t.error === 'Límite de almacenamiento'),
   );
 
   isStartUpload = signal<boolean>(false);
@@ -75,6 +81,15 @@ export class UploadManager {
    */
   startUploads() {
     if (this.isProcessing()) return;
+
+    this.queue.update((tasks) =>
+      tasks.map((task) =>
+        task.error === 'Límite de almacenamiento'
+          ? { ...task, status: 'pending', error: undefined }
+          : task,
+      ),
+    );
+
     this.isProcessing.set(true);
     this.isStartUpload.set(true);
     this.processNextTask();
@@ -94,9 +109,8 @@ export class UploadManager {
       this.isProcessing.set(false);
 
       this.isStartUpload.set(false);
-      if (this.playbackManager.isPlaying()) return;
 
-      this.songManager.refresh(); // Refresca la lista
+      this.songManager.refresh();
       return;
     }
 
@@ -106,7 +120,7 @@ export class UploadManager {
         next: () => {
           const completed = this.successCount();
           this.checkAndRefresh(completed);
-          // Cuando termine (incluyendo el delay), buscamos la siguiente
+          // Cuando termine buscamos la siguiente
           this.processNextTask();
         },
         error: () => {
@@ -122,8 +136,14 @@ export class UploadManager {
       concatMap(() => this.uploadToServer(task)),
 
       concatMap(() => {
-        const randomDelay = Math.floor(Math.random() * 2000) + 1000;
-        return timer(randomDelay);
+        const hasMorePending = this.queue().some((t) => t.status === 'pending');
+
+        if (hasMorePending) {
+          const randomDelay = Math.floor(Math.random() * 2000) + 1000;
+          return timer(randomDelay);
+        }
+
+        return of(null);
       }),
 
       catchError((err) => {
@@ -146,7 +166,7 @@ export class UploadManager {
     formData.append('file', task.finalBlob || task.file);
 
     return this.http
-      .post(this.apiUrl, formData, {
+      .post<UploadResponse>(this.apiUrl, formData, {
         reportProgress: true,
         observe: 'events',
       })
@@ -158,7 +178,11 @@ export class UploadManager {
           }
         }),
         filter((event) => event.type === HttpEventType.Response),
-        tap(() => {
+        tap((res) => {
+          const storageData = res.body?.storage;
+
+          if (storageData) this.authUser.updateStorage(storageData.used);
+
           this.updateTaskStatus(task.id, 'success', 100);
         }),
       );
@@ -186,10 +210,12 @@ export class UploadManager {
 
     if (error.status === 507) {
       msg = 'Límite de almacenamiento';
+
       this.isStorageFull.set(true); // Bloqueamos el Dropzone
       this.stopSignal$.next(); // Paramos la cola inmediatamente
       this.isProcessing.set(false);
     }
+
     this.updateTaskStatus(id, 'error', 0);
 
     this.queue.update((tasks) => tasks.map((t) => (t.id === id ? { ...t, error: msg } : t)));

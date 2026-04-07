@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, output, signal } from '@angular/core';
 import { UploadManager } from '../../../services/upload-manager';
 import { EditableTitle } from '../../../shared/directives/editable-title';
 
@@ -10,6 +10,8 @@ import { EditableTitle } from '../../../shared/directives/editable-title';
 })
 export class UploadStation {
   public uploadManager = inject(UploadManager);
+
+  onClose = output<void>();
 
   isDragging = signal(false);
 
@@ -46,5 +48,11 @@ export class UploadStation {
 
   onDragLeave() {
     this.isDragging.set(false);
+  }
+
+  onUploadComplete() {
+    this.uploadManager.clearQueue();
+
+    this.onClose.emit();
   }
 }

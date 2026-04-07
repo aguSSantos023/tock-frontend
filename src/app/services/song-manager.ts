@@ -1,9 +1,10 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable, Injector, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { firstValueFrom } from 'rxjs';
 import { DeleteSongsResponse, PaginatedSongs, Song } from '../shared/interface/song.interface';
 import { AuthUser } from './auth-user';
+import { UploadManager } from './upload-manager';
 
 @Injectable({
   providedIn: 'root',
@@ -11,6 +12,7 @@ import { AuthUser } from './auth-user';
 export class SongManager {
   private http = inject(HttpClient);
   private authUser = inject(AuthUser);
+  private injector = inject(Injector);
 
   private apiUrl = `${environment.apiUrl}/songs`;
 
@@ -52,24 +54,31 @@ export class SongManager {
   }
 
   async delete(target: number[] | 'all') {
+    const uploadManager = this.injector.get(UploadManager);
+
     const payload = {
       ids: target === 'all' ? 'all' : target,
     };
 
-    const response = await firstValueFrom(
-      this.http.delete<DeleteSongsResponse>(`${this.apiUrl}`, { body: payload }),
-    );
+    try {
+      const response = await firstValueFrom(
+        this.http.delete<DeleteSongsResponse>(`${this.apiUrl}`, { body: payload }),
+      );
 
-    this.songs.update((list) => {
-      if (target === 'all') return [];
+      this.songs.update((list) => {
+        if (target === 'all') return [];
 
-      const targetIds = target as number[];
+        const targetIds = target as number[];
 
-      return list.filter((s) => !targetIds.includes(s.id));
-    });
+        return list.filter((s) => !targetIds.includes(s.id));
+      });
 
-    if (response.storage) {
-      this.authUser.updateStorage(response.storage.used);
+      if (response.storage) {
+        this.authUser.updateStorage(response.storage.used);
+        uploadManager.isStorageFull.set(false);
+      }
+    } catch (err) {
+      this.error.set('Error al eliminar las canciones');
     }
   }
 
