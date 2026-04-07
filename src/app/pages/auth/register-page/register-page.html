@@ -11,11 +11,16 @@
         <input
           type="email"
           formControlName="email"
-          class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+          class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+          [class.border-red-500]="f['email'].errors && f['email'].touched"
           placeholder="nombre@ejemplo.com"
         />
-        @if (registerForm.get('email')?.hasError('email') && registerForm.get('email')?.touched) {
-          <p class="text-red-400 text-xs mt-1">Formato de email incorrecto.</p>
+        @if (f['email'].touched) {
+          @if (f['email'].hasError('required')) {
+            <p class="text-red-400 text-xs mt-1 italic">El email es obligatorio.</p>
+          } @else if (f['email'].hasError('email')) {
+            <p class="text-red-400 text-xs mt-1">Formato de email incorrecto.</p>
+          }
         }
       </div>
 
@@ -24,20 +29,41 @@
         <input
           type="password"
           formControlName="password"
-          class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+          class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+          [class.border-red-500]="f['password'].errors && f['password'].touched"
           placeholder="••••••••"
         />
-        @if (
-          registerForm.get('password')?.hasError('minlength') &&
-          registerForm.get('password')?.touched
-        ) {
-          <p class="text-red-400 text-xs mt-1">Mínimo 6 caracteres.</p>
+        @if (f['password'].touched) {
+          @if (f['password'].hasError('required')) {
+            <p class="text-red-400 text-xs mt-1">La contraseña es obligatoria.</p>
+          } @else if (f['password'].hasError('minlength')) {
+            <p class="text-red-400 text-xs mt-1">
+              La contraseña debe tener al menos
+              <span class="font-bold">8 caracteres</span>.
+            </p>
+          }
+        }
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Confirmar Contraseña</label>
+        <input
+          type="password"
+          formControlName="confirmPassword"
+          class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+          [class.border-red-500]="
+            registerForm.hasError('passwordMismatch') && f['confirmPassword'].touched
+          "
+          placeholder="••••••••"
+        />
+        @if (registerForm.hasError('passwordMismatch') && f['confirmPassword'].touched) {
+          <p class="text-red-400 text-xs mt-1 italic">Las contraseñas no coinciden.</p>
         }
       </div>
 
       @if (errorMessage()) {
         <div
-          class="p-3 bg-red-900/30 border border-red-800 rounded text-red-300 text-sm text-center animate-pulse"
+          class="p-3 bg-red-900/30 border border-red-800 rounded text-red-300 text-sm text-center animate-in fade-in zoom-in duration-300"
         >
           {{ errorMessage() }}
         </div>
@@ -46,10 +72,10 @@
       <button
         type="submit"
         [disabled]="registerForm.invalid || isSubmitting()"
-        class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center mt-6 cursor-pointer"
+        class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed flex justify-center mt-6 cursor-pointer"
       >
         @if (isSubmitting()) {
-          <span>Creando cuenta...</span>
+          <span class="animate-pulse">Creando cuenta...</span>
         } @else {
           <span>Registrarse</span>
         }

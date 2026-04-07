@@ -19,13 +19,16 @@ export class LoginPage {
 
   loginForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required]],
+    password: ['', [Validators.required, Validators.minLength(8)]],
   });
+
+  get f() {
+    return this.loginForm.controls;
+  }
 
   async onSubmit() {
     if (this.loginForm.invalid) return;
 
-    // Reset estado
     this.isSubmitting.set(true);
     this.errorMessage.set(null);
 
@@ -37,7 +40,6 @@ export class LoginPage {
 
       this.router.navigate(['/songs']);
     } catch (err: any) {
-      // 'error' es el string que devolvió parseError
       this.errorMessage.set('Usuario o contraseña incorrectos.');
       this.isSubmitting.set(false);
     }

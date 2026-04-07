@@ -1,5 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { AuthUser } from '../../../services/auth-user';
 import { Router, RouterLink } from '@angular/router';
 
@@ -17,10 +24,29 @@ export class RegisterPage {
   errorMessage = signal<string | null>(null);
   isSubmitting = signal(false);
 
-  registerForm: FormGroup = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required]],
-  });
+  registerForm: FormGroup = this.fb.group(
+    {
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(8)]],
+      confirmPassword: ['', [Validators.required]],
+    },
+    {
+      validators: this.passwordMatchValidator,
+    },
+  );
+
+  get f() {
+    return this.registerForm.controls;
+  }
+
+  private passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+    const password = control.get('password');
+    const confirmPassword = control.get('confirmPassword');
+
+    return password && confirmPassword && password.value !== confirmPassword.value
+      ? { passwordMismatch: true }
+      : null;
+  }
 
   async onSubmit() {
     if (this.registerForm.invalid) return;
