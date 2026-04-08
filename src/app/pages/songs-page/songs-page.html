@@ -4,72 +4,104 @@
       <h1 class="text-3xl font-bold text-white tracking-tight">Mis Canciones</h1>
       <p class="text-gray-400 text-sm mt-1">Tu biblioteca personal</p>
     </div>
-    <button
-      (click)="toggleForm()"
-      class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer"
-    >
-      {{ showForm() ? 'Cancelar' : '+ Subir Canción' }}
-    </button>
-  </header>
 
-  @if (showForm()) {
-    <div
-      class="max-w-4xl mx-auto mb-8 bg-gray-900 p-6 rounded-xl border border-gray-700 animate-fade-in"
-    >
-      <h3 class="text-white font-bold mb-4">Nueva Canción</h3>
-
-      <form [formGroup]="uploadForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
-        @if (errorMessage()) {
-          <div
-            class="bg-red-900/50 border border-red-500 text-red-200 p-3 rounded-lg text-sm flex items-center gap-2"
-          >
-            <span>🚫</span> {{ errorMessage() }}
-          </div>
+    <div class="flex items-center gap-4">
+      <div class="relative">
+        <button
+          (click)="toggleUploadStation()"
+          class="w-40 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium transition-all cursor-pointer"
+        >
+          {{ showUploadStation() ? 'Cerrar' : '+ Subir Canción' }}
+        </button>
+        @if (showUploadStation()) {
+          <app-upload-station (onClose)="showUploadStation.set(false)" />
         }
+      </div>
 
-        <div class="relative">
-          <input
-            type="file"
-            accept="audio/mpeg"
-            (change)="onFileChange($event)"
-            class="block w-full text-sm text-gray-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-800 file:text-indigo-400 hover:file:bg-gray-700 cursor-pointer border border-gray-700 rounded-lg bg-gray-800/50 focus:outline-none focus:border-indigo-500 transition-colors"
-          />
+      <div class="relative" #profileMenuContainer>
+        <div
+          class="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 shadow-md"
+          [style.background]="
+            'conic-gradient(' +
+            authUser.storageStatusColor() +
+            ' ' +
+            authUser.storagePercent() +
+            '%, #1f2937 0%)'
+          "
+        >
+          <button
+            (click)="toggleProfileMenu()"
+            class="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors cursor-pointer group"
+            title="Almacenamiento: {{
+              authUser.storagePercent() === 0 ? '0' : (authUser.storagePercent() | number: '1.0-1')
+            }}%"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-6 h-6 pointer-events-none"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
+            </svg>
+          </button>
         </div>
 
-        @if (uploadForm.value.fileSource) {
-          <div class="animate-fade-in flex flex-col gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">
-                Título de la canción
-              </label>
-              <input
-                type="text"
-                formControlName="title"
-                class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-              />
-            </div>
+        @if (showProfileMenu()) {
+          <div
+            class="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-800 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200"
+          >
+            <div class="p-3 border-b border-gray-800">
+              <p class="text-xs text-gray-500 uppercase font-bold tracking-wider">Usuario</p>
+              <p class="text-sm text-gray-200 truncate font-medium ml-2">
+                {{ authUser.userEmail() | username }}
+              </p>
 
+              <div class="mt-2 px-2">
+                <div class="flex justify-between text-[10px] mb-1 font-medium">
+                  <span class="text-gray-500 italic">
+                    {{ authUser.userData()?.storage_used | dataSize: 1 }} /
+                    {{ authUser.userData()?.storage_limit | dataSize: 0 }}
+                  </span>
+
+                  <span [style.color]="authUser.storageStatusColor()" class="font-bold">
+                    {{ authUser.storagePercent() | number: '1.0-0' }}%
+                  </span>
+                </div>
+                <div class="w-full bg-gray-800 rounded-full h-1">
+                  <div
+                    class="h-1 rounded-full transition-all duration-1000"
+                    [style.width.%]="authUser.storagePercent()"
+                    [style.background-color]="authUser.storageStatusColor()"
+                  ></div>
+                </div>
+              </div>
+            </div>
             <button
-              type="submit"
-              [disabled]="uploadForm.invalid || isUploading()"
-              class="bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold py-2.5 px-4 rounded-lg transition-colors w-full sm:w-auto self-end flex justify-center items-center gap-2 cursor-pointer"
+              (click)="onLogout()"
+              class="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-white/5 transition-colors flex items-center gap-2 cursor-pointer"
             >
-              @if (isUploading()) {
-                <div
-                  class="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
-                ></div>
-                Subiendo...
-              } @else {
-                Guardar Canción
-              }
+              <span>Cerrar sesión</span>
+            </button>
+            <button
+              (click)="openDeleteModal()"
+              class="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-2 cursor-pointer"
+            >
+              <span>Eliminar cuenta</span>
             </button>
           </div>
         }
-      </form>
+      </div>
     </div>
-  }
+  </header>
 
-  @if (songManager.songs.isLoading()) {
+  @if (songManager.loading()) {
     <div class="flex justify-center mt-20">
       <div
         class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"
@@ -77,108 +109,283 @@
     </div>
   }
 
-  @if (songManager.songs.error()) {
+  @if (songManager.error()) {
     <div class="text-center py-10 text-red-400">
       <p>Error al cargar las canciones.</p>
     </div>
   }
 
-  <main class="max-w-4xl mx-auto space-y-4">
-    @if (
-      !songManager.songs.isLoading() &&
-      (!songManager.songs.value() || songManager.songs.value()?.length === 0)
-    ) {
+  <main class="relative max-w-4xl mx-auto space-y-4 pb-24">
+    @if (!songManager.loading() && songManager.songs().length === 0) {
       <div class="text-center py-20 bg-gray-900 rounded-xl border border-gray-800">
         <p class="text-gray-400 text-lg">No tienes canciones subidas aún.</p>
       </div>
     } @else {
-      @for (song of songManager.songs.value() ?? []; track song.id) {
+      @if (isSelectionMode()) {
         <div
-          (click)="togglePlay(song)"
-          class="border rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4 transition-all shadow-lg cursor-pointer group"
-          [class.bg-gray-800]="currentSong()?.id === song.id"
-          [class.border-indigo-500]="currentSong()?.id === song.id"
-          [class.bg-gray-900]="currentSong()?.id !== song.id"
-          [class.border-gray-800]="currentSong()?.id !== song.id"
-          [class.hover:border-gray-600]="currentSong()?.id !== song.id"
+          animate.enter="header-slide-in"
+          animate.leave="header-slide-out"
+          class="grid sticky top-4 z-40 overflow-hidden"
         >
-          <div
-            class="h-14 w-14 rounded-full flex items-center justify-center shrink-0 transition-colors"
-            [class.bg-indigo-600]="currentSong()?.id === song.id"
-            [class.text-white]="currentSong()?.id === song.id"
-            [class.bg-gray-800]="currentSong()?.id !== song.id"
-            [class.group-hover:bg-gray-700]="currentSong()?.id !== song.id"
-          >
-            @if (currentSong()?.id === song.id && isPlaying()) {
+          <div class="min-h-0">
+            <header
+              class="flex items-center justify-between bg-gray-900/40 backdrop-blur-md border border-indigo-500/20 p-4 rounded-xl shadow-2xl mb-6"
+            >
+              <div class="flex items-center gap-4">
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    [checked]="isAllSelected()"
+                    (change)="selectAll($event)"
+                    class="w-5 h-5 rounded-full border-2 border-gray-700 bg-gray-900 text-red-600 focus:ring-offset-gray-950 focus:ring-red-500 transition-all cursor-pointer checked:border-red-500 appearance-none checked:bg-red-600 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-[10px] checked:after:font-bold"
+                  />
+                  <span
+                    class="text-sm font-semibold text-gray-300 group-hover:text-white transition-colors"
+                  >
+                    {{ isAllSelected() ? 'Todas seleccionadas' : 'Seleccionar todas' }}
+                  </span>
+                </label>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button
+                  (click)="toggleSelectionMode()"
+                  class="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors font-medium cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  [disabled]="selectionCount() === 0"
+                  (click)="onBulkDelete()"
+                  class="px-5 py-2 w-64 bg-red-600 hover:bg-red-500 disabled:bg-red-900/20 disabled:text-red-500/50 border border-red-500/20 text-white text-sm font-bold rounded-lg transition-all cursor-pointer"
+                >
+                  {{ deleteButtonText() }}
+                </button>
+              </div>
+            </header>
+          </div>
+        </div>
+      }
+
+      @for (song of songManager.songs(); track song.id; let i = $index) {
+        <div
+          [id]="'song-' + song.id"
+          (click)="isSelectionMode() ? toggleSongSelection(song.id) : togglePlay(song)"
+          class="group flex items-center gap-4 p-3 rounded-lg transition-all cursor-pointer border-l-4"
+          [class.bg-white/5]="playbackManager.currentSong()?.id !== song.id"
+          [class.bg-indigo-500/10]="playbackManager.currentSong()?.id === song.id"
+          [class.border-transparent]="playbackManager.currentSong()?.id !== song.id"
+          [class.border-indigo-500]="playbackManager.currentSong()?.id === song.id"
+          [class.hover:bg-white/10]="playbackManager.currentSong()?.id !== song.id"
+        >
+          <div class="w-8 flex justify-center items-center text-sm font-medium text-gray-500">
+            @if (playbackManager.currentSong()?.id === song.id && playbackManager.isPlaying()) {
+              <div class="flex gap-0.5 items-end h-4 group-hover:hidden">
+                <div class="w-1 bg-indigo-500 animate-bounce h-2"></div>
+                <div class="w-1 bg-indigo-500 animate-[bounce_1.2s_infinite] h-4"></div>
+                <div class="w-1 bg-indigo-500 animate-[bounce_0.8s_infinite] h-3"></div>
+              </div>
+            } @else {
+              <span class="group-hover:hidden">{{ i + 1 }}</span>
+            }
+
+            @if (isSelectionMode()) {
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                fill="none"
+                class="hidden group-hover:block w-5 h-5 text-red-500 animate-in fade-in zoom-in duration-200"
                 viewBox="0 0 24 24"
-                stroke-width="2"
+                fill="none"
                 stroke="currentColor"
-                class="w-8 h-8"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
               >
                 <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M15.75 5.25v13.5m-7.5-13.5v13.5"
+                  d="M3 6h18m-2 0v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
                 />
               </svg>
             } @else {
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="currentColor"
-                class="w-8 h-8 ml-1"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"
-                />
-              </svg>
+              @if (playbackManager.isPlaying() && playbackManager.currentSong()?.id === song.id) {
+                <svg
+                  class="hidden group-hover:block w-4 h-4 fill-current text-white animate-in fade-in scale-in duration-200"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    fill="currentColor"
+                    d="M16 19q-.825 0-1.412-.587T14 17V7q0-.825.588-1.412T16 5t1.413.588T18 7v10q0 .825-.587 1.413T16 19m-8 0q-.825 0-1.412-.587T6 17V7q0-.825.588-1.412T8 5t1.413.588T10 7v10q0 .825-.587 1.413T8 19"
+                  />
+                </svg>
+              } @else {
+                <svg
+                  class="hidden group-hover:block w-4 h-4 fill-current text-white animate-in fade-in scale-in duration-200"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    fill="currentColor"
+                    d="M8 17.175V6.825q0-.425.3-.713t.7-.287q.125 0 .263.037t.262.113l8.15 5.175q.225.15.338.375t.112.475t-.112.475t-.338.375l-8.15 5.175q-.125.075-.262.113T9 18.175q-.4 0-.7-.288t-.3-.712"
+                  />
+                </svg>
+              }
             }
           </div>
 
-          <div class="flex-1 text-center sm:text-left min-w-0">
+          <div class="flex-1 min-w-0">
             <h3
-              class="font-bold text-lg truncate transition-colors"
-              [class.text-indigo-400]="currentSong()?.id === song.id"
-              [class.text-white]="currentSong()?.id !== song.id"
+              class="font-semibold truncate"
+              [class.text-indigo-400]="playbackManager.currentSong()?.id === song.id"
+              [class.text-white]="playbackManager.currentSong()?.id !== song.id"
             >
               {{ song.title }}
             </h3>
-            <div class="text-xs text-gray-500 flex gap-3 justify-center sm:justify-start mt-1">
-              <span>{{ song.created_at | date: 'mediumDate' }}</span>
-              <span>•</span>
-              <span>{{ formatSize(song.file_size) }}</span>
-            </div>
+            <p class="text-xs text-gray-400 truncate">{{ song.artist }}</p>
           </div>
 
-          @if (currentSong()?.id === song.id && isPlaying()) {
-            <div class="flex gap-1 items-end h-6 mr-4">
-              <div class="w-1 bg-indigo-500 animate-bounce h-3"></div>
-              <div class="w-1 bg-indigo-500 animate-[bounce_1.2s_infinite] h-5"></div>
-              <div class="w-1 bg-indigo-500 animate-[bounce_0.8s_infinite] h-4"></div>
-              <div class="w-1 bg-indigo-500 animate-[bounce_1.1s_infinite] h-2"></div>
-            </div>
-          } @else {
-            <button
-              (click)="songManager.delete(song.id)"
-              class="flex justify-center items-center h-6 mr-4 cursor-pointer hover:scale-125 duration-150"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M7 21q-.825 0-1.412-.587T5 19V6q-.425 0-.712-.288T4 5t.288-.712T5 4h4q0-.425.288-.712T10 3h4q.425 0 .713.288T15 4h4q.425 0 .713.288T20 5t-.288.713T19 6v13q0 .825-.587 1.413T17 21zM17 6H7v13h10zm-7 11q.425 0 .713-.288T11 16V9q0-.425-.288-.712T10 8t-.712.288T9 9v7q0 .425.288.713T10 17m4 0q.425 0 .713-.288T15 16V9q0-.425-.288-.712T14 8t-.712.288T13 9v7q0 .425.288.713T14 17M7 6v13z"
+          <div class="hidden sm:flex flex-col items-end text-xs text-gray-500 gap-1">
+            <span class="font-mono">{{ song.duration | duration }}</span>
+            <span>{{ song.file_size | dataSize }}</span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3">
+              @if (isSelectionMode()) {
+                <input
+                  type="checkbox"
+                  [checked]="selectedIds().has(song.id)"
+                  (change)="toggleSongSelection(song.id)"
+                  (click)="$event.stopPropagation()"
+                  class="w-5 h-5 rounded-full border-2 border-gray-700 bg-gray-900 text-red-600 focus:ring-offset-gray-950 focus:ring-red-500 transition-all cursor-pointer checked:border-red-500 appearance-none checked:bg-red-600 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-[10px] checked:after:font-bold"
                 />
-              </svg>
-            </button>
-          }
+              } @else {
+                <button
+                  (click)="
+                    $event.stopPropagation(); toggleSelectionMode(); toggleSongSelection(song.id)
+                  "
+                  class="p-2 text-gray-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-5 h-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M3 6h18m-2 0v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                    />
+                  </svg>
+                </button>
+              }
+            </div>
+          </div>
         </div>
       }
+      <div
+        id="scroll-sentinel"
+        class="absolute bottom-96 w-full h-10 pointer-events-none -z-10"
+      ></div>
     }
   </main>
 </div>
+
+@if (showDeleteModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div
+      class="bg-gray-900 border border-gray-800 p-6 rounded-2xl max-w-md w-full shadow-2xl animate-in zoom-in duration-300"
+    >
+      <h2 class="text-xl font-bold text-white mb-2">¿Estás absolutamente seguro?</h2>
+      <p class="text-gray-400 text-sm mb-6 leading-relaxed">
+        Esta acción es irreversible. Se eliminarán permanentemente todas tus canciones y tu cuenta
+        de Tock Music.
+      </p>
+
+      <div class="space-y-4">
+        <p class="text-xs text-gray-500 italic">
+          Escribe
+          <span class="text-red-400 font-bold uppercase tracking-widest">eliminar</span> para
+          confirmar:
+        </p>
+
+        <input
+          #confirmInput
+          type="text"
+          (input)="checkDeleteConfirmation(confirmInput.value)"
+          (keyup.enter)="onConfirmDelete()"
+          (keyup.esc)="closeDeleteModal()"
+          placeholder="Escribe la palabra aquí..."
+          class="w-full uppercase bg-black/50 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-500 transition-all"
+        />
+
+        <div class="flex gap-3 pt-2">
+          <button
+            (click)="closeDeleteModal()"
+            class="flex-1 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors font-medium cursor-pointer"
+          >
+            Cancelar
+          </button>
+          <button
+            [disabled]="!canDelete()"
+            (click)="onConfirmDelete()"
+            class="flex-1 px-4 py-2 bg-red-600 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-red-500 text-white rounded-lg transition-colors font-medium cursor-pointer"
+          >
+            Eliminar todo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showBulkDeleteModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div
+      class="bg-gray-900 border border-gray-800 p-6 rounded-2xl max-w-sm w-full shadow-2xl animate-in zoom-in duration-200"
+    >
+      <div class="flex flex-col items-center text-center">
+        <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-8 h-8 text-red-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
+        </div>
+
+        <h2 class="text-xl font-bold text-white mb-2">¿Borrar {{ selectionCount() }} canciones?</h2>
+        <p class="text-gray-400 text-sm mb-6 leading-relaxed">
+          Vas a eliminar permanentemente estas canciones de tu biblioteca. Esta acción no se puede
+          deshacer.
+        </p>
+
+        <div class="flex gap-3 w-full">
+          <button
+            (click)="closeBulkDeleteModal()"
+            class="flex-1 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors font-medium cursor-pointer"
+          >
+            No, volver
+          </button>
+          <button
+            (click)="executeDeletion()"
+            class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors font-medium cursor-pointer shadow-lg shadow-red-600/20"
+          >
+            Sí, eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

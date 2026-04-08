@@ -1,143 +1,212 @@
-import { Component, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  ElementRef,
+  HostListener,
+  inject,
+  OnInit,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { SongManager } from '../../services/song-manager';
-import { environment } from '../../../environments/environment.development';
-import { DatePipe } from '@angular/common';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Song } from '../../models/song.model';
+import { Song } from '../../shared/interface/song.interface';
+import { DurationPipe } from '../../shared/pipes/duration-pipe';
+import { PlaybackManager } from '../../services/playback-manager';
+import { UploadManager } from '../../services/upload-manager';
+import { UploadStation } from './upload-station/upload-station';
+import { AuthUser } from '../../services/auth-user';
+import { UsernamePipe } from '../../shared/pipes/username-pipe';
+import { DecimalPipe } from '@angular/common';
+import { DataSizePipe } from '../../shared/pipes/datasize-pipe';
 
 @Component({
   selector: 'app-songs-page',
-  imports: [DatePipe, ReactiveFormsModule],
+  imports: [DurationPipe, DecimalPipe, DataSizePipe, UploadStation, UsernamePipe],
   templateUrl: './songs-page.html',
   styleUrl: './songs-page.css',
 })
-export class SongsPage {
+export class SongsPage implements OnInit, AfterViewInit {
   public songManager = inject(SongManager);
+  public authUser = inject(AuthUser);
+  public playbackManager = inject(PlaybackManager);
+  public uploadManager = inject(UploadManager);
 
-  backendUrl = environment.apiUrl.replace('/api', '');
+  private observer!: IntersectionObserver;
 
-  // UI State
-  showForm = signal(false);
-  isUploading = signal(false);
-  errorMessage = signal<string | null>(null);
+  @ViewChild('profileMenuContainer') profileMenuContainer!: ElementRef;
+  @ViewChild('confirmInput') inputRef!: ElementRef<HTMLInputElement>;
 
-  currentSong = signal<Song | null>(null);
-  isPlaying = signal(false);
-  isLoadingAudio = signal(false);
+  showUploadStation = signal(false);
+  showProfileMenu = signal(false);
+  showDeleteModal = signal(false);
+  canDelete = signal(false);
 
-  uploadForm = new FormGroup({
-    fileSource: new FormControl<File | null>(null, Validators.required),
-    title: new FormControl('', Validators.required), // Se rellena solo
+  showBulkDeleteModal = signal(false);
+
+  isSelectionMode = signal(false);
+  selectedIds = signal<Set<number>>(new Set());
+
+  selectionCount = computed(() => this.selectedIds().size);
+  isAllSelected = computed(() => {
+    const songs = this.songManager.songs();
+    return songs.length > 0 && this.selectedIds().size === songs.length;
   });
 
-  private audio = new Audio();
-  private currentObjectUrl: string | null = null; // Para limpiar memoria
+  deleteButtonText = computed(() => {
+    if (this.isAllSelected()) return 'Eliminar todas las canciones';
+    return `Eliminar ${this.selectionCount()} ${this.selectionCount() === 1 ? 'canción' : 'canciones'}`;
+  });
 
-  toggleForm() {
-    this.showForm.update((v) => !v);
-    this.errorMessage.set(null);
-    this.uploadForm.reset();
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (!this.showProfileMenu()) return;
+
+    const clickedInside = this.profileMenuContainer.nativeElement.contains(event.target);
+
+    if (!clickedInside) this.showProfileMenu.set(false);
   }
 
-  onFileChange(event: any) {
-    this.errorMessage.set(null);
-
-    if (event.target.files.length === 0) {
-      this.uploadForm.reset();
-      return;
-    }
-
-    const file = event.target.files[0] as File;
-
-    if (!file) return;
-
-    // 50MB (50 * 1024 * 1024 bytes)
-    const maxSize = 50 * 1024 * 1024;
-
-    if (file.size > maxSize) {
-      this.errorMessage.set(
-        `⚠️ El archivo es demasiado grande (${(file.size / 1024 / 1024).toFixed(2)}MB). Máximo 50MB.`,
-      );
-      this.uploadForm.reset();
-      return;
-    }
-
-    // "Mi Cancion.mp3" -> "Mi Cancion"
-    const title = file.name.replace(/\.[^/.]+$/, '');
-
-    this.uploadForm.patchValue({
-      fileSource: file,
-      title: title,
-    });
+  ngOnInit() {
+    this.songManager.loadMore();
   }
 
-  async onSubmit() {
-    if (this.uploadForm.invalid) return;
-
-    this.isUploading.set(true);
-    const { fileSource, title } = this.uploadForm.value;
-
-    try {
-      if (fileSource && title) {
-        await this.songManager.upload(fileSource, title);
-
-        this.toggleForm(); // Cierra el formulario
-        this.songManager.songs.reload(); // Recarga la lista
-      }
-    } catch (error) {
-      console.error(error);
-      this.errorMessage.set('Error al subir la canción.');
-    } finally {
-      this.isUploading.set(false);
+  toggleUploadStation() {
+    if (this.isSelectionMode()) {
+      this.isSelectionMode.set(false);
+      this.selectedIds.set(new Set());
     }
+    this.showUploadStation.update((v) => !v);
+  }
+
+  ngAfterViewInit() {
+    this.observer = new IntersectionObserver(
+      (entries) => {
+        // Si el centinela es visible y NO estamos cargando ya
+        if (entries[0].isIntersecting && !this.songManager.loading()) {
+          this.songManager.loadMore();
+        }
+      },
+      {
+        threshold: 0.1, //la función se disparará cuando apenas el 10% del centinela sea visible
+      },
+    );
+
+    const sentinel = document.querySelector('#scroll-sentinel');
+    if (sentinel) this.observer.observe(sentinel);
   }
 
   togglePlay(song: Song) {
-    const isSameSong = this.currentSong()?.id === song.id;
-
-    if (isSameSong) {
-      if (this.isPlaying()) {
-        this.audio.pause();
-        this.isPlaying.set(false);
-      } else {
-        this.audio.play();
-        this.isPlaying.set(true);
-      }
-    } else {
-      this.currentSong.set(song);
-      this.isPlaying.set(false);
-      this.isLoadingAudio.set(true);
-
-      this.songManager.getAudioBlob(song.id).subscribe({
-        next: (blob) => {
-          if (this.currentObjectUrl) URL.revokeObjectURL(this.currentObjectUrl);
-
-          this.currentObjectUrl = URL.createObjectURL(blob);
-
-          this.audio.src = this.currentObjectUrl;
-          this.audio.load();
-          this.audio
-            .play()
-            .then(() => {
-              this.isPlaying.set(true);
-              this.isLoadingAudio.set(false);
-            })
-            .catch((err) => console.error('Error play:', err));
-        },
-        error: (err) => {
-          console.error('Error descargando audio:', err);
-          this.isLoadingAudio.set(false);
-        },
-      });
-    }
-
-    this.audio.onended = () => {
-      this.isPlaying.set(false);
-    };
+    this.playbackManager.playSong(song);
   }
 
-  formatSize(bytes: string): string {
-    const mb = parseInt(bytes) / (1024 * 1024);
-    return mb.toFixed(2) + ' MB';
+  ngOnDestroy() {
+    if (this.observer) this.observer.disconnect();
+  }
+
+  toggleProfileMenu() {
+    this.showProfileMenu.update((v) => !v);
+  }
+
+  onLogout() {
+    this.authUser.logout();
+  }
+
+  openDeleteModal() {
+    this.showProfileMenu.set(false);
+    this.showDeleteModal.set(true);
+
+    setTimeout(() => {
+      this.inputRef?.nativeElement.focus();
+    }, 0);
+  }
+
+  closeDeleteModal() {
+    this.showDeleteModal.set(false);
+    this.canDelete.set(false);
+
+    if (this.inputRef) {
+      this.inputRef.nativeElement.value = '';
+    }
+  }
+
+  checkDeleteConfirmation(value: string) {
+    const isSame = value.toLowerCase() === 'eliminar';
+    this.canDelete.set(isSame);
+  }
+
+  async onConfirmDelete() {
+    try {
+      await this.authUser.deleteAccount();
+    } catch (err) {
+      alert(err);
+    }
+  }
+
+  toggleSelectionMode() {
+    if (this.showUploadStation()) this.showUploadStation.set(false);
+
+    this.isSelectionMode.update((v) => !v);
+
+    if (!this.isSelectionMode()) {
+      this.selectedIds.set(new Set());
+    }
+  }
+
+  toggleSongSelection(songId: number) {
+    this.selectedIds.update((set) => {
+      const newSet = new Set(set);
+      if (newSet.has(songId)) newSet.delete(songId);
+      else newSet.add(songId);
+      return newSet;
+    });
+  }
+
+  selectAll(event: Event) {
+    const checkbox = event.target as HTMLInputElement;
+    if (checkbox.checked) {
+      const allIds = this.songManager.songs().map((s) => s.id);
+      this.selectedIds.set(new Set(allIds));
+    } else {
+      this.selectedIds.set(new Set());
+    }
+  }
+
+  async onBulkDelete() {
+    const count = this.selectionCount();
+
+    if (count === 0) return;
+
+    if (count === 1) {
+      await this.executeDeletion();
+    } else {
+      this.showBulkDeleteModal.set(true);
+    }
+  }
+
+  async executeDeletion() {
+    try {
+      const selectedIdsArray = Array.from(this.selectedIds());
+      const idsToDelete = this.isAllSelected() ? 'all' : selectedIdsArray;
+
+      const current = this.playbackManager.currentSong();
+      if (current) {
+        const isCurrentDeleted = this.isAllSelected() || selectedIdsArray.includes(current.id);
+        if (isCurrentDeleted) this.playbackManager.eject();
+      }
+
+      await this.songManager.delete(idsToDelete);
+
+      // Limpieza
+      this.closeBulkDeleteModal();
+      this.isSelectionMode.set(false);
+      this.selectedIds.set(new Set());
+    } catch (err) {
+      console.error('Error al eliminar:', err);
+    }
+  }
+
+  closeBulkDeleteModal() {
+    this.showBulkDeleteModal.set(false);
   }
 }
